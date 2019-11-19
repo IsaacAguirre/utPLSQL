@@ -1,7 +1,7 @@
 create or replace type ut_data_value_yminterval under ut_data_value(
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ create or replace type ut_data_value_yminterval under ut_data_value(
   data_value yminterval_unconstrained,
   constructor function ut_data_value_yminterval(self in out nocopy ut_data_value_yminterval, a_value yminterval_unconstrained) return self as result,
   overriding member function is_null return boolean,
-  overriding member function to_string return varchar2
+  overriding member function to_string return varchar2,
+  overriding member function compare_implementation(a_other ut_data_value) return integer
 )
 /

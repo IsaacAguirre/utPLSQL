@@ -1,7 +1,7 @@
 create or replace package body ut_teamcity_reporter_helper is
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -21,21 +21,25 @@ create or replace package body ut_teamcity_reporter_helper is
 
   function escape_value(a_value in varchar2) return varchar2 is
   begin
-    return regexp_replace(a_value, '(''|"|' || chr(13) || '|' || chr(10) || '|[|])', '|\1');
+    return translate(regexp_replace(a_value, q'/(\'|\||\[|\]|/' || chr(13) || '|' || chr(10) || ')', '|\1'),chr(13)||chr(10),'rn');
   end;
 
   function message(a_command in varchar2, a_props t_props default cast(null as t_props)) return varchar2 is
     l_message varchar2(32767);
     l_index   t_prop_index;
     l_value   varchar2(32767);
+    l_max_len binary_integer := 2000;
   begin
     l_message := '##teamcity[' || a_command || ' timestamp=''' ||
-                 regexp_replace(to_char(systimestamp, 'YYYY-MM-DD"T"HH24:MI:ss.FFTZHTZM'), '(\.\d{3})\d+(\+)', '\1\2') || '''';
+                 regexp_replace(to_char(systimestamp, 'YYYY-MM-DD"T"HH24:MI:ss.FF3TZHTZM'), '(\.\d{3})\d+(\+)', '\1\2') || '''';
 
     l_index := a_props.first;
     while l_index is not null loop
       if a_props(l_index) is not null then
         l_value   := escape_value(a_props(l_index));
+        if length(l_value) > l_max_len then
+          l_value   := substr(l_value,1,l_max_len-7)||escape_value('[...]');
+        end if;
         l_message := l_message || ' ' || l_index || '=''' || l_value || '''';
       end if;
       l_index := a_props.next(l_index);
@@ -44,22 +48,6 @@ create or replace package body ut_teamcity_reporter_helper is
     return l_message;
 
   end message;
-
-  function block_opened(a_name varchar2, a_flow_id varchar2 default null) return varchar2 is
-    l_props t_props;
-  begin
-    l_props('name') := a_name;
-    l_props('flowId') := a_flow_id;
-    return message('blockOpened', l_props);
-  end;
-
-  function block_closed(a_name varchar2, a_flow_id varchar2 default null) return varchar2 is
-    l_props t_props;
-  begin
-    l_props('name') := a_name;
-    l_props('flowId') := a_flow_id;
-    return message('blockClosed', l_props);
-  end;
 
   function test_suite_started(a_suite_name varchar2, a_flow_id varchar2 default null) return varchar2 is
     l_props t_props;
@@ -101,7 +89,7 @@ create or replace package body ut_teamcity_reporter_helper is
     return message('testFinished', l_props);
   end;
 
-  function test_ignored(a_test_name varchar2, a_flow_id varchar2 default null) return varchar2 is
+  function test_disabled(a_test_name varchar2, a_flow_id varchar2 default null) return varchar2 is
     l_props t_props;
   begin
     l_props('name') := a_test_name;
@@ -123,14 +111,7 @@ create or replace package body ut_teamcity_reporter_helper is
 
     return message('testFailed', l_props);
   end;
-  function test_std_out(a_test_name varchar2, a_out in varchar2, a_flow_id in varchar2 default null) return varchar2 is
-    l_props t_props;
-  begin
-    l_props('name') := a_test_name;
-    l_props('out') := a_out;
-    l_props('flowId') := a_flow_id;
-    return message('testStdOut', l_props);
-  end;
+
   function test_std_err(a_test_name varchar2, a_out in varchar2, a_flow_id in varchar2 default null) return varchar2 is
     l_props t_props;
   begin
@@ -138,16 +119,6 @@ create or replace package body ut_teamcity_reporter_helper is
     l_props('out') := a_out;
     l_props('flowId') := a_flow_id;
     return message('testStdErr', l_props);
-  end;
-
-  function custom_message(a_text in varchar2, a_status in varchar2, a_error_deatils in varchar2 default null, a_flow_id in varchar2 default null) return varchar2 is
-    l_props t_props;
-  begin
-    l_props('text') := a_text;
-    l_props('status') := a_status;
-    l_props('errorDetails') := a_error_deatils;
-    l_props('flowId') := a_flow_id;
-    return message('message', l_props);
   end;
 
 end ut_teamcity_reporter_helper;

@@ -1,7 +1,7 @@
 create or replace type body ut_data_value_dsinterval as
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ create or replace type body ut_data_value_dsinterval as
   constructor function ut_data_value_dsinterval(self in out nocopy ut_data_value_dsinterval, a_value dsinterval_unconstrained) return self as result is
   begin
     self.data_value := a_value;
-    self.data_type := 'day to second interval';
+    self.self_type  := $$plsql_unit;
+    self.data_type := 'interval day to second';
     return;
   end;
 
@@ -31,6 +32,23 @@ create or replace type body ut_data_value_dsinterval as
   overriding member function to_string return varchar2 is
   begin
     return ut_utils.to_string(self.data_value);
+  end;
+
+  overriding member function compare_implementation(a_other ut_data_value) return integer is
+    l_result integer;
+    l_other  ut_data_value_dsinterval;
+  begin
+    if a_other is of (ut_data_value_dsinterval) then
+      l_other := treat(a_other as ut_data_value_dsinterval);
+      if self.data_value = l_other.data_value then
+        l_result := 0;
+      elsif self.data_value > l_other.data_value then
+        l_result := 1;
+      elsif self.data_value < l_other.data_value then
+        l_result := -1;
+      end if;
+    end if;
+    return l_result;
   end;
 
 end;

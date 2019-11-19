@@ -1,7 +1,7 @@
-create or replace type ut_data_value_refcursor under ut_data_value(
+create or replace type ut_data_value_refcursor under ut_compound_data_value(
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -15,38 +15,38 @@ create or replace type ut_data_value_refcursor under ut_data_value(
   See the License for the specific language governing permissions and
   limitations under the License.
   */
+  /**
+   * Holds information about ref cursor to be processed by expectation
+   */
+
+
+  /**
+   * Determines if the cursor is null
+   */
+  is_cursor_null  integer,
+      
   /*
-    class: ut_data_value_refcursor
-
-    Holds information about ref cursor to be processed by expectation
-  */
-
-
+  *columns info 
+  */  
+  cursor_details ut_cursor_details,
+  
   /*
-    var: data_value
-
-    Holds a dbms_xmlgen context for a cursor obtained by calling dbms_xmlgen.newContext(sys_refcursor)
+  * extract path of elements, important for collectiosn and objects
   */
-  data_value number,
-
-  /*
-    function: ut_data_value_refcursor
-
-    constructor function that builds a cursor from a sql_statement that was passed in
-  */
+  extract_path varchar2(10),
+  
   constructor function ut_data_value_refcursor(self in out nocopy ut_data_value_refcursor, a_value sys_refcursor) return self as result,
-
-  /*
-    function: ut_data_value_refcursor
-
-    constructor function that builds a cursor from a sql_statement that was passed in
-  */
-  constructor function ut_data_value_refcursor(self in out nocopy ut_data_value_refcursor, a_value varchar2) return self as result,
-
-  overriding member function is_null return boolean,
-
+  member procedure extract_cursor(self in out nocopy ut_data_value_refcursor, a_value sys_refcursor),
+  member procedure init(self in out nocopy ut_data_value_refcursor, a_value sys_refcursor),
   overriding member function to_string return varchar2,
-
-  member function is_empty return boolean
-)
+  overriding member function diff( a_other ut_data_value, a_match_options ut_matcher_options ) return varchar2,
+  overriding member function compare_implementation(a_other ut_data_value) return integer,
+  member function compare_implementation(
+    a_other ut_data_value,
+    a_match_options ut_matcher_options,
+    a_inclusion_compare boolean := false,
+    a_is_negated boolean := false
+  ) return integer,
+  overriding member function is_empty return boolean
+) not final
 /

@@ -1,7 +1,7 @@
-create or replace type ut_data_value authid current_user  as object(
+create or replace type ut_data_value force authid current_user as object (
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -16,7 +16,16 @@ create or replace type ut_data_value authid current_user  as object(
   limitations under the License.
   */
   data_type         varchar2(250 char),
+  self_type         varchar2(250 char),
   not instantiable member function is_null return boolean,
-  not instantiable member function to_string return varchar2
+  not instantiable member function to_string return varchar2,
+  member function get_object_info return varchar2,
+  member function is_multi_line return boolean,
+  final member function to_string_report(a_add_new_line_for_multi_line boolean := false, a_with_object_info boolean := true) return varchar2,
+  order member function compare( a_other ut_data_value ) return integer,
+  member function is_diffable return boolean,
+  member function is_empty return boolean,
+  member function diff( a_other ut_data_value, a_match_options ut_matcher_options ) return varchar2,
+  not instantiable member function compare_implementation( a_other ut_data_value ) return integer
 ) not final not instantiable
 /

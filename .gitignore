@@ -4,8 +4,28 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 # User-specific stuff:
 .idea/
+.vscode/
+.sonar/
 site/
 pages/
 release/
 *.gz
 *.zip
+node_modules/
+utPLSQL_latest_release/
+utPLSQL-cli/
+development/env.sh
+development/*.jar
+*.log
+
+# exclusions based on artifacts created via actions documented in CONTRIBUTING.md
+test/dummy.sql
+coverage.html_assets/
+coverage.html
+coverage.json
+coverage.xml
+tfs_test_results.xml
+junit_test_results.xml
+test_results.xml
+*debug*.xml
+cobertura.xml

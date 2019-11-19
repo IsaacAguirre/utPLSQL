@@ -1,7 +1,7 @@
 create or replace type ut_match under ut_matcher(
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ create or replace type ut_match under ut_matcher(
   pattern varchar2(4000),
   modifiers varchar2(4000),
   constructor function ut_match(self in out nocopy ut_match, a_pattern in varchar2, a_modifiers in varchar2 default null) return self as result,
-  overriding member function run_matcher(self in out nocopy ut_match, a_actual ut_data_value) return boolean
+  overriding member function run_matcher(self in out nocopy ut_match, a_actual ut_data_value) return boolean,
+  overriding member function failure_message(a_actual ut_data_value) return varchar2,
+  overriding member function failure_message_when_negated(a_actual ut_data_value) return varchar2
 )
 /

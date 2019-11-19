@@ -1,8 +1,8 @@
 create or replace package ut authid current_user as
 
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -17,45 +17,233 @@ create or replace package ut authid current_user as
   limitations under the License.
   */
 
-  function expect(a_actual in anydata, a_message varchar2 := null) return ut_expectation_anydata;
+  function version return varchar2;
 
-  function expect(a_actual in blob, a_message varchar2 := null) return ut_expectation_blob;
+  function expect(a_actual in anydata, a_message varchar2 := null) return ut_expectation_compound;
 
-  function expect(a_actual in boolean, a_message varchar2 := null) return ut_expectation_boolean;
+  function expect(a_actual in blob, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in clob, a_message varchar2 := null) return ut_expectation_clob;
+  function expect(a_actual in boolean, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in date, a_message varchar2 := null) return ut_expectation_date;
+  function expect(a_actual in clob, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in number, a_message varchar2 := null) return ut_expectation_number;
+  function expect(a_actual in date, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in sys_refcursor, a_message varchar2 := null) return ut_expectation_refcursor;
+  function expect(a_actual in number, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in timestamp_unconstrained, a_message varchar2 := null) return ut_expectation_timestamp;
+  function expect(a_actual in sys_refcursor, a_message varchar2 := null) return ut_expectation_compound;
 
-  function expect(a_actual in timestamp_ltz_unconstrained, a_message varchar2 := null) return ut_expectation_timestamp_ltz;
+  function expect(a_actual in timestamp_unconstrained, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in timestamp_tz_unconstrained, a_message varchar2 := null) return ut_expectation_timestamp_tz;
+  function expect(a_actual in timestamp_ltz_unconstrained, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in varchar2, a_message varchar2 := null) return ut_expectation_varchar2;
+  function expect(a_actual in timestamp_tz_unconstrained, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in yminterval_unconstrained, a_message varchar2 := null) return ut_expectation_yminterval;
+  function expect(a_actual in varchar2, a_message varchar2 := null) return ut_expectation;
 
-  function expect(a_actual in dsinterval_unconstrained, a_message varchar2 := null) return ut_expectation_dsinterval;
+  function expect(a_actual in yminterval_unconstrained, a_message varchar2 := null) return ut_expectation;
+
+  function expect(a_actual in dsinterval_unconstrained, a_message varchar2 := null) return ut_expectation;
+
+  function expect(a_actual in json_element_t , a_message varchar2 := null) return ut_expectation_json;
 
   procedure fail(a_message in varchar2);
 
-  function run(a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_list pipelined;
+  function run(
+    a_reporter ut_reporter_base := null,
+    a_color_console integer := 0,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_file_mappings ut_file_mappings := null,
+    a_test_file_mappings ut_file_mappings := null,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_random_test_order     integer := 0,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  ) return ut_varchar2_rows pipelined;
 
-  function run(a_paths ut_varchar2_list, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_list pipelined;
+  function run(
+    a_reporter ut_reporter_base := null,
+    a_color_console integer := 0,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_files ut_varchar2_list,
+    a_test_files ut_varchar2_list,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_random_test_order     integer := 0,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  ) return ut_varchar2_rows pipelined;
 
-  function run(a_path varchar2, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console integer := 0) return ut_varchar2_list pipelined;
+  function run(
+    a_paths ut_varchar2_list,
+    a_reporter ut_reporter_base := null,
+    a_color_console integer := 0,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_file_mappings ut_file_mappings := null,
+    a_test_file_mappings ut_file_mappings := null,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_random_test_order     integer := 0,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  ) return ut_varchar2_rows pipelined;
 
-  procedure run(a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console boolean := false);
+  function run(
+    a_paths ut_varchar2_list,
+    a_reporter ut_reporter_base := null,
+    a_color_console integer := 0,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_files ut_varchar2_list,
+    a_test_files ut_varchar2_list,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_random_test_order     integer := 0,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  ) return ut_varchar2_rows pipelined;
 
-  procedure run(a_paths ut_varchar2_list, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console boolean := false);
+  function run(
+    a_path varchar2,
+    a_reporter ut_reporter_base := null,
+    a_color_console integer := 0,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_file_mappings ut_file_mappings := null,
+    a_test_file_mappings ut_file_mappings := null,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_random_test_order     integer := 0,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  ) return ut_varchar2_rows pipelined;
 
-  procedure run(a_path varchar2, a_reporter ut_reporter_base := ut_documentation_reporter(), a_color_console boolean := false);
+  function run(
+    a_path varchar2,
+    a_reporter ut_reporter_base := null,
+    a_color_console integer := 0,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_files ut_varchar2_list,
+    a_test_files ut_varchar2_list,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_random_test_order     integer := 0,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  ) return ut_varchar2_rows pipelined;
+
+  procedure run(
+    a_reporter ut_reporter_base := null,
+    a_color_console boolean := false,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_file_mappings ut_file_mappings := null,
+    a_test_file_mappings ut_file_mappings := null,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_force_manual_rollback boolean := false,
+    a_random_test_order     boolean := false,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  );
+
+  procedure run(
+    a_reporter ut_reporter_base := null,
+    a_color_console boolean := false,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_files ut_varchar2_list,
+    a_test_files ut_varchar2_list,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_force_manual_rollback boolean := false,
+    a_random_test_order     boolean := false,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  );
+
+  procedure run(
+    a_paths ut_varchar2_list,
+    a_reporter ut_reporter_base := null,
+    a_color_console boolean := false,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_file_mappings ut_file_mappings := null,
+    a_test_file_mappings ut_file_mappings := null,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_force_manual_rollback boolean := false,
+    a_random_test_order     boolean := false,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  );
+
+  procedure run(
+    a_paths ut_varchar2_list,
+    a_reporter ut_reporter_base := null,
+    a_color_console boolean := false,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_files ut_varchar2_list,
+    a_test_files ut_varchar2_list,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_force_manual_rollback boolean := false,
+    a_random_test_order     boolean := false,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  );
+
+  procedure run(
+    a_path varchar2,
+    a_reporter ut_reporter_base := null,
+    a_color_console boolean := false,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_file_mappings ut_file_mappings := null,
+    a_test_file_mappings ut_file_mappings := null,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_force_manual_rollback boolean := false,
+    a_random_test_order     boolean := false,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  );
+
+  procedure run(
+    a_path varchar2,
+    a_reporter ut_reporter_base := null,
+    a_color_console boolean := false,
+    a_coverage_schemes ut_varchar2_list := null,
+    a_source_files ut_varchar2_list,
+    a_test_files ut_varchar2_list,
+    a_include_objects ut_varchar2_list := null,
+    a_exclude_objects ut_varchar2_list := null,
+    a_client_character_set varchar2 := null,
+    a_force_manual_rollback boolean := false,
+    a_random_test_order     boolean := false,
+    a_random_test_order_seed     positive := null,
+    a_tags varchar2 := null
+  );
+
+  /**
+   * Helper procedure to set NLS session parameter for date processing in refcursor.
+   * It needs to be called before refcursor is open in order to have DATE data type data in refcursor
+   *  properly transformed into XML format as a date-time element.
+   * If the function is not called before opening a cursor to be compared, the DATE data is compared using default NLS setting for date.
+   */
+  procedure set_nls;
+
+  /**
+   * Helper procedure to reset NLS session parameter to it's original state.
+   * It needs to be called after refcursor is open in order restore the original session state and keep the NLS date setting at default.
+   */
+  procedure reset_nls;
 
 end ut;
 /

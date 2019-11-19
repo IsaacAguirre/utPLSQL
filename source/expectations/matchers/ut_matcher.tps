@@ -1,7 +1,7 @@
 create or replace type ut_matcher authid current_user as object(
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@ create or replace type ut_matcher authid current_user as object(
   See the License for the specific language governing permissions and
   limitations under the License.
   */
-  name            varchar2(250),
-  additional_info varchar2(4000),
-  error_message   varchar2(4000),
-  expected        ut_data_value,
+  self_type       varchar2(250),
+  is_errored      integer,
+  is_negated_flag number(1,0),
 
   /*
     function: run_matcher
@@ -30,6 +29,16 @@ create or replace type ut_matcher authid current_user as object(
     - false for faulure of a matcher,
     - null when result cannot be determined (type mismatch or exception)
   */
-  member function run_matcher(self in out nocopy ut_matcher, a_actual ut_data_value) return boolean
+  member function run_matcher(self in out nocopy ut_matcher, a_actual ut_data_value) return boolean,
+  member function run_matcher_negated(self in out nocopy ut_matcher, a_actual ut_data_value) return boolean,
+  member function name return varchar2,
+  member function description return varchar2,
+  member function description_when_negated return varchar2,
+  member function error_message(a_actual ut_data_value) return varchar2,
+  member function failure_message(a_actual ut_data_value) return varchar2,
+  member function failure_message_when_negated(a_actual ut_data_value) return varchar2,
+  member procedure negated,
+  member function negated return ut_matcher,
+  member function is_negated return boolean
 ) not final not instantiable
 /

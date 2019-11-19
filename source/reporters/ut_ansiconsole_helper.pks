@@ -1,7 +1,7 @@
 create or replace package ut_ansiconsole_helper as
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@ create or replace package ut_ansiconsole_helper as
   limitations under the License.
   */
   procedure color_enabled(a_enabled boolean);
-  function color_enabled return boolean;
+
   function red(a_text varchar2) return varchar2;
+
   function green(a_text varchar2) return varchar2;
+
   function yellow(a_text varchar2) return varchar2;
-  function blue(a_text varchar2) return varchar2;
-  function magenta(a_text varchar2) return varchar2;
+
   function cyan(a_text varchar2) return varchar2;
 end;
 /

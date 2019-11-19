@@ -1,7 +1,7 @@
 create or replace type body ut_logical_suite as
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -16,75 +16,45 @@ create or replace type body ut_logical_suite as
   limitations under the License.
   */
 
-  constructor function ut_logical_suite(
-    self in out nocopy ut_logical_suite,a_object_owner varchar2, a_object_name varchar2, a_name varchar2, a_description varchar2 := null, a_path varchar2
-  ) return self as result is
+  overriding member procedure mark_as_skipped(self in out nocopy ut_logical_suite) is
   begin
-    self.self_type := $$plsql_unit;
-    self.init(a_object_owner, a_object_name, a_name, a_description, a_path, ut_utils.gc_rollback_auto, false);
-    self.items := ut_suite_items();
-    return;
-  end;
-
-  member function is_valid return boolean is
-  begin
-    return true;
-  end;
-
-  member function item_index(a_name varchar2) return pls_integer is
-    l_item_index   pls_integer := self.items.first;
-    c_lowered_name constant varchar2(4000 char) := lower(trim(a_name));
-    l_result       pls_integer;
-  begin
-    while l_item_index is not null loop
-      if self.items(l_item_index).name = c_lowered_name then
-        l_result := l_item_index;
-        exit;
-      end if;
-      l_item_index := self.items.next(l_item_index);
+    ut_event_manager.trigger_event(ut_event_manager.gc_before_suite, self);
+    self.start_time := current_timestamp;
+    for i in 1 .. self.items.count loop
+      self.items(i).mark_as_skipped();
     end loop;
-    return l_result;
-  end item_index;
-
-  member procedure add_item(self in out nocopy ut_logical_suite, a_item ut_suite_item) is
-  begin
-    self.items.extend;
-    self.items(self.items.last) := a_item;
+    self.end_time := self.start_time;
+    ut_event_manager.trigger_event(ut_event_manager.gc_after_suite, self);
+    self.calc_execution_result();
   end;
 
-  overriding member procedure do_execute(self in out nocopy ut_logical_suite, a_listener in out nocopy ut_event_listener_base) is
-    l_completed_without_errors boolean;
+  overriding member procedure set_rollback_type(self in out nocopy ut_logical_suite, a_rollback_type integer, a_force boolean := false) is
   begin
-    l_completed_without_errors := self.do_execute(a_listener);
+    self.rollback_type := case when a_force then a_rollback_type else coalesce(self.rollback_type, a_rollback_type) end;
+    for i in 1 .. self.items.count loop
+      self.items(i).set_rollback_type(self.rollback_type, a_force);
+    end loop;
   end;
 
-  overriding member function do_execute(self in out nocopy ut_logical_suite, a_listener in out nocopy ut_event_listener_base) return boolean is
+  overriding member function do_execute(self in out nocopy ut_logical_suite) return boolean is
     l_suite_savepoint varchar2(30);
     l_item_savepoint  varchar2(30);
     l_completed_without_errors boolean;
   begin
     ut_utils.debug_log('ut_logical_suite.execute');
 
-    if self.get_ignore_flag() then
-      self.result := ut_utils.tr_ignore;
-      ut_utils.debug_log('ut_logical_suite.execute - ignored');
-    else
-      a_listener.fire_before_event(ut_utils.gc_suite,self);
+    ut_event_manager.trigger_event(ut_event_manager.gc_before_suite, self);
+    self.start_time := current_timestamp;
 
-      self.start_time := current_timestamp;
+    for i in 1 .. self.items.count loop
+      -- execute the item (test or suite)
+      self.items(i).do_execute();
+    end loop;
 
-      for i in 1 .. self.items.count loop
-        -- execute the item (test or suite)
-        self.items(i).do_execute(a_listener);
+    self.calc_execution_result();
+    self.end_time := current_timestamp;
 
-      end loop;
-
-      self.calc_execution_result();
-
-      self.end_time := current_timestamp;
-
-      a_listener.fire_after_event(ut_utils.gc_suite,self);
-    end if;
+    ut_event_manager.trigger_event(ut_event_manager.gc_after_suite, self);
 
     return l_completed_without_errors;
   end;
@@ -99,11 +69,51 @@ create or replace type body ut_logical_suite as
       l_result := self.results_count.result_status();
     else
       --if suite is empty then it's successful (no errors)
-      l_result := ut_utils.tr_success;
+      l_result := ut_utils.gc_success;
     end if;
 
       self.result := l_result;
-    end;
+  end;
+
+  overriding member procedure mark_as_errored(self in out nocopy ut_logical_suite, a_error_stack_trace varchar2) is
+  begin
+    ut_utils.debug_log('ut_logical_suite.fail');
+    ut_event_manager.trigger_event(ut_event_manager.gc_before_suite, self);
+    self.start_time := current_timestamp;
+    for i in 1 .. self.items.count loop
+      -- execute the item (test or suite)
+      self.items(i).mark_as_errored(a_error_stack_trace);
+    end loop;
+    self.calc_execution_result();
+    self.end_time := self.start_time;
+    ut_event_manager.trigger_event(ut_event_manager.gc_after_suite, self);
+  end;
+
+  overriding member function get_error_stack_traces return ut_varchar2_list is
+  begin
+    return ut_varchar2_list();
+  end;
+
+  overriding member function get_serveroutputs return clob is
+  begin
+    return null;
+  end;
+
+  overriding member function get_transaction_invalidators return ut_varchar2_list is
+    l_result ut_varchar2_list;
+    l_child_results ut_varchar2_list;
+  begin
+    l_result := self.transaction_invalidators;
+    for i in 1 .. self.items.count loop
+      l_child_results := self.items(i).get_transaction_invalidators();
+      for j in 1 .. l_child_results.count loop
+        if l_child_results(j) not member of l_result then
+          l_result.extend; l_result(l_result.last) := l_child_results(j);
+        end if;
+      end loop;
+    end loop;
+    return l_result;
+  end;
 
 end;
 /

@@ -1,7 +1,7 @@
 create or replace type body ut_reporter_base is
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -19,19 +19,23 @@ create or replace type body ut_reporter_base is
   final member procedure init(self in out nocopy ut_reporter_base, a_self_type varchar2) is
   begin
     self.self_type   := a_self_type;
-    self.reporter_id := sys_guid();
-    self.start_date  := sysdate();
+    self.id          := sys_guid();
     return;
   end;
 
-  final member function get_reporter_id(self in out nocopy ut_reporter_base) return raw is
+  member procedure set_reporter_id(self in out nocopy ut_reporter_base, a_reporter_id raw) is
   begin
-    return self.reporter_id;
+    self.id := a_reporter_id;
   end;
 
-  member procedure print_text(self in out nocopy ut_reporter_base, a_text varchar2) is
+  member function get_reporter_id return raw is
   begin
-    ut_output_buffer.send_line(self,a_text);
+    return self.id;
+  end;
+
+  member function get_description return varchar2 is
+  begin
+    return 'No description available';
   end;
 
   -- run hooks
@@ -46,20 +50,20 @@ create or replace type body ut_reporter_base is
     null;
   end;
 
-  member procedure before_calling_before_all(self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure before_calling_before_all(self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
-  member procedure after_calling_before_all (self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure after_calling_before_all (self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
 
-  member procedure before_calling_before_each(self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure before_calling_before_each(self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
-  member procedure after_calling_before_each (self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure after_calling_before_each (self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
@@ -70,29 +74,29 @@ create or replace type body ut_reporter_base is
     null;
   end;
 
-  member procedure before_calling_before_test(self in out nocopy ut_reporter_base, a_test in ut_test) is
+  member procedure before_calling_before_test(self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
-  member procedure after_calling_before_test (self in out nocopy ut_reporter_base, a_test in ut_test) is
-  begin
-    null;
-  end;
-
-  member procedure before_calling_test_execute(self in out nocopy ut_reporter_base, a_test in ut_test) is
-  begin
-    null;
-  end;
-  member procedure after_calling_test_execute (self in out nocopy ut_reporter_base, a_test in ut_test) is
+  member procedure after_calling_before_test (self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
 
-  member procedure before_calling_after_test(self in out nocopy ut_reporter_base, a_test in ut_test) is
+  member procedure before_calling_test_execute(self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
-  member procedure after_calling_after_test (self in out nocopy ut_reporter_base, a_test in ut_test) is
+  member procedure after_calling_test_execute (self in out nocopy ut_reporter_base, a_executable in ut_executable) is
+  begin
+    null;
+  end;
+
+  member procedure before_calling_after_test(self in out nocopy ut_reporter_base, a_executable in ut_executable) is
+  begin
+    null;
+  end;
+  member procedure after_calling_after_test (self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
@@ -103,20 +107,20 @@ create or replace type body ut_reporter_base is
   end;
 
   --suite hooks continued
-  member procedure before_calling_after_each(self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure before_calling_after_each(self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
-  member procedure after_calling_after_each (self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure after_calling_after_each (self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
 
-  member procedure before_calling_after_all(self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure before_calling_after_all(self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
-  member procedure after_calling_after_all (self in out nocopy ut_reporter_base, a_suite in ut_logical_suite) is
+  member procedure after_calling_after_all (self in out nocopy ut_reporter_base, a_executable in ut_executable) is
   begin
     null;
   end;
@@ -129,7 +133,87 @@ create or replace type body ut_reporter_base is
   -- run hooks continued
   member procedure after_calling_run (self in out nocopy ut_reporter_base, a_run in ut_run) is
   begin
-    ut_output_buffer.close(self);
+    null;
   end;
+
+  overriding member function get_supported_events return ut_varchar2_list is
+  begin
+    return ut_varchar2_list(
+      ut_event_manager.gc_initialize,
+      ut_event_manager.gc_before_run,
+      ut_event_manager.gc_before_suite,
+      ut_event_manager.gc_before_test,
+      ut_event_manager.gc_before_before_all,
+      ut_event_manager.gc_before_before_each,
+      ut_event_manager.gc_before_before_test,
+      ut_event_manager.gc_before_test_execute,
+      ut_event_manager.gc_before_after_test,
+      ut_event_manager.gc_before_after_each,
+      ut_event_manager.gc_before_after_all,
+      ut_event_manager.gc_after_run,
+      ut_event_manager.gc_after_suite,
+      ut_event_manager.gc_after_test,
+      ut_event_manager.gc_after_before_all,
+      ut_event_manager.gc_after_before_each,
+      ut_event_manager.gc_after_before_test,
+      ut_event_manager.gc_after_test_execute,
+      ut_event_manager.gc_after_after_test,
+      ut_event_manager.gc_after_after_each,
+      ut_event_manager.gc_after_after_all,
+      ut_event_manager.gc_finalize
+    );
+  end;
+
+  overriding member procedure on_event( self in out nocopy ut_reporter_base, a_event_name varchar2, a_event_item ut_event_item) is
+  begin
+    case a_event_name
+      when ut_event_manager.gc_initialize
+      then self.on_initialize(treat(a_event_item as ut_run));
+      when ut_event_manager.gc_before_run
+      then self.before_calling_run(treat(a_event_item as ut_run));
+      when ut_event_manager.gc_before_suite
+      then self.before_calling_suite(treat(a_event_item as ut_logical_suite));
+      when ut_event_manager.gc_before_before_all
+      then self.before_calling_before_all(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_before_before_each
+      then self.before_calling_before_each(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_before_test
+      then self.before_calling_test(treat(a_event_item as ut_test));
+      when ut_event_manager.gc_before_before_test
+      then self.before_calling_before_test(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_before_test_execute
+      then self.before_calling_test_execute(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_before_after_test
+      then self.before_calling_after_test(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_before_after_each
+      then self.before_calling_after_each(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_before_after_all
+      then self.before_calling_after_all(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_after_run
+      then self.after_calling_run(treat(a_event_item as ut_run));
+      when ut_event_manager.gc_after_suite
+      then self.after_calling_suite(treat(a_event_item as ut_logical_suite));
+      when ut_event_manager.gc_after_before_all
+      then self.after_calling_before_all(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_after_before_each
+      then self.after_calling_before_each(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_after_test
+      then self.after_calling_test(treat(a_event_item as ut_test));
+      when ut_event_manager.gc_after_before_test
+      then self.after_calling_before_test(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_after_test_execute
+      then self.after_calling_test_execute(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_after_after_test
+      then self.after_calling_after_test(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_after_after_each
+      then self.after_calling_after_each(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_after_after_all
+      then self.after_calling_after_all(treat(a_event_item as ut_executable));
+      when ut_event_manager.gc_finalize
+      then self.on_finalize(treat(a_event_item as ut_run));
+      else null;
+    end case;
+  end;
+
 end;
 /

@@ -1,7 +1,7 @@
 create or replace type body ut_equal as
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -16,22 +16,45 @@ create or replace type body ut_equal as
   limitations under the License.
   */
 
-  member procedure init(self in out nocopy ut_equal, a_expected ut_data_value, a_nulls_are_equal boolean) is
+  member procedure init(self in out nocopy ut_equal, a_expected ut_data_value, a_nulls_are_equal boolean, a_self_type varchar2 := null) is
   begin
-    self.nulls_are_equal_flag := ut_utils.boolean_to_int( coalesce(a_nulls_are_equal, ut_assert_processor.nulls_are_equal()) );
-    self.name := 'equal';
-    self.expected := a_expected;
+    self.expected  := a_expected;
+    self.options := ut_matcher_options( a_nulls_are_equal );
+    self.self_type := nvl( a_self_type, $$plsql_unit );
   end;
-
+ 
   member function equal_with_nulls(a_assert_result boolean, a_actual ut_data_value) return boolean is
   begin
     ut_utils.debug_log('ut_equal.equal_with_nulls :' || ut_utils.to_test_result(a_assert_result) || ':');
-    return ( a_assert_result or ( self.expected.is_null() and a_actual.is_null() and ut_utils.int_to_boolean( nulls_are_equal_flag ) ) );
+    return ( a_assert_result or ( self.expected.is_null() and a_actual.is_null() and options.nulls_are_equal ) );
   end;
 
   constructor function ut_equal(self in out nocopy ut_equal, a_expected anydata, a_nulls_are_equal boolean := null) return self as result is
   begin
     init(ut_data_value_anydata(a_expected), a_nulls_are_equal);
+    return;
+  end;
+
+  constructor function ut_equal(self in out nocopy ut_equal, a_expected anydata, a_exclude varchar2, a_nulls_are_equal boolean := null) return self as result is
+    l_deprecated integer;
+  begin
+    ut_expectation_processor.add_depreciation_warning(
+      'equal( a_expected anydata, a_exclude varchar2 )',
+      'equal( a_expected anydata ).exclude( a_exclude varchar2 )'
+    );
+    init(ut_data_value_anydata(a_expected), a_nulls_are_equal);
+    self.options.exclude.add_items(a_exclude);
+    return;
+  end;
+
+  constructor function ut_equal(self in out nocopy ut_equal, a_expected anydata, a_exclude ut_varchar2_list, a_nulls_are_equal boolean := null) return self as result is
+  begin
+    ut_expectation_processor.add_depreciation_warning(
+      'equal( a_expected anydata, a_exclude ut_varchar2_list )',
+      'equal( a_expected anydata ).exclude( a_exclude ut_varchar2_list )'
+    );
+    init(ut_data_value_anydata(a_expected), a_nulls_are_equal);
+    self.options.exclude.add_items(a_exclude);
     return;
   end;
 
@@ -71,6 +94,28 @@ create or replace type body ut_equal as
     return;
   end;
 
+  constructor function ut_equal(self in out nocopy ut_equal, a_expected sys_refcursor, a_exclude varchar2, a_nulls_are_equal boolean := null) return self as result is
+  begin
+    ut_expectation_processor.add_depreciation_warning(
+      'equal( a_expected sys_refcursor, a_exclude varchar2 )',
+      'equal( a_expected sys_refcursor ).exclude( a_exclude varchar2 )'
+    );
+    init(ut_data_value_refcursor(a_expected), a_nulls_are_equal);
+    self.options.exclude.add_items(a_exclude);
+    return;
+  end;
+
+  constructor function ut_equal(self in out nocopy ut_equal, a_expected sys_refcursor, a_exclude ut_varchar2_list, a_nulls_are_equal boolean := null) return self as result is
+  begin
+    ut_expectation_processor.add_depreciation_warning(
+      'equal( a_expected sys_refcursor, a_exclude ut_varchar2_list )',
+      'equal( a_expected sys_refcursor ).exclude( a_exclude ut_varchar2_list )'
+    );
+    init(ut_data_value_refcursor(a_expected), a_nulls_are_equal);
+    self.options.exclude.add_items(a_exclude);
+    return;
+  end;
+
   constructor function ut_equal(self in out nocopy ut_equal, a_expected timestamp_unconstrained, a_nulls_are_equal boolean := null) return self as result is
   begin
     init(ut_data_value_timestamp(a_expected), a_nulls_are_equal);
@@ -107,125 +152,117 @@ create or replace type body ut_equal as
     return;
   end;
 
+  constructor function ut_equal(self in out nocopy ut_equal, a_expected json_element_t, a_nulls_are_equal boolean := null) return self as result is
+  begin
+    init(ut_data_value_json(a_expected), a_nulls_are_equal);
+    return;
+  end;
+
+  member function include(a_items varchar2) return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.include.add_items(a_items);
+    return l_result;
+  end;
+
+  member function include(a_items ut_varchar2_list) return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.include.add_items(a_items);
+    return l_result;
+  end;
+
+  member function exclude(a_items varchar2) return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.exclude.add_items(a_items);
+    return l_result;
+  end;
+
+  member function exclude(a_items ut_varchar2_list) return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.exclude.add_items(a_items);
+    return l_result;
+  end;
+
+  member function unordered return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.unordered();
+    return l_result;
+  end;
+
+  member function join_by(a_columns varchar2) return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.unordered();
+    l_result.options.join_by.add_items(a_columns);
+    return l_result;
+  end;
+
+  member function join_by(a_columns ut_varchar2_list) return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.unordered();
+    l_result.options.join_by.add_items(a_columns);
+    return l_result;
+  end;
+
+  member function uc return ut_equal is
+  begin
+    return unordered_columns;
+  end;
+  
+  member function unordered_columns return ut_equal is
+    l_result ut_equal := self;
+  begin
+    l_result.options.unordered_columns();
+    return l_result;
+  end;
+    
   overriding member function run_matcher(self in out nocopy ut_equal, a_actual ut_data_value) return boolean is
     l_result boolean;
   begin
-    if self.expected is of (ut_data_value_anydata) and a_actual is of (ut_data_value_anydata)
-      --anydata can hold many different data types
-      and self.expected.data_type = a_actual.data_type then
-      declare
-        l_expected ut_data_value_anydata := treat(self.expected as ut_data_value_anydata);
-        l_actual   ut_data_value_anydata := treat(a_actual as ut_data_value_anydata);
-      begin
-        ut_assert_processor.set_xml_nls_params();
-        --XMLTYPE doesn't like the null being passed from anydata or object types, so we need to check if anydata holds null Object/collection
-        --This is why equal_with_nulls cannot be used here
-        if ut_utils.int_to_boolean( nulls_are_equal_flag ) and self.expected.is_null() and a_actual.is_null() then
-            l_result := true;
-        elsif self.expected.is_null() or a_actual.is_null() then
-          l_result := false;
-        else
-          l_result := xmltype(l_expected.data_value).getclobval() = xmltype(l_actual.data_value).getclobval();
-        end if;
-        ut_assert_processor.reset_nls_params();
-      end;
-    elsif self.expected is of (ut_data_value_blob) and a_actual is of (ut_data_value_blob) then
-      declare
-        l_expected ut_data_value_blob := treat(self.expected as ut_data_value_blob);
-        l_actual   ut_data_value_blob := treat(a_actual as ut_data_value_blob);
-      begin
-        l_result := equal_with_nulls((dbms_lob.compare( l_expected.data_value, l_actual.data_value) = 0), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_boolean) and a_actual is of (ut_data_value_boolean) then
-      declare
-        l_expected ut_data_value_boolean := treat(self.expected as ut_data_value_boolean);
-        l_actual   ut_data_value_boolean := treat(a_actual as ut_data_value_boolean);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_clob) and a_actual is of (ut_data_value_clob) then
-      declare
-        l_expected ut_data_value_clob := treat(self.expected as ut_data_value_clob);
-        l_actual   ut_data_value_clob := treat(a_actual as ut_data_value_clob);
-      begin
-        l_result := equal_with_nulls((dbms_lob.compare( l_expected.data_value, l_actual.data_value) = 0), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_date) and a_actual is of (ut_data_value_date) then
-      declare
-        l_expected ut_data_value_date := treat(self.expected as ut_data_value_date);
-        l_actual   ut_data_value_date := treat(a_actual as ut_data_value_date);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_number) and a_actual is of (ut_data_value_number) then
-      declare
-        l_expected ut_data_value_number := treat(self.expected as ut_data_value_number);
-        l_actual   ut_data_value_number := treat(a_actual as ut_data_value_number);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_refcursor) and a_actual is of (ut_data_value_refcursor) then
-      declare
-        l_expected ut_data_value_refcursor := treat(self.expected as ut_data_value_refcursor);
-        l_actual   ut_data_value_refcursor := treat(a_actual as ut_data_value_refcursor);
-      begin
-        if l_expected.data_value is not null and l_actual.data_value is not null then
-          --fetch 1M rows max
-          dbms_xmlgen.setMaxRows(l_expected.data_value, 1000000);
-          dbms_xmlgen.setMaxRows(l_actual.data_value, 1000000);
-          ut_assert_processor.set_xml_nls_params();
-          l_result := dbms_lob.compare( dbms_xmlgen.getxml(l_expected.data_value), dbms_xmlgen.getxml(l_actual.data_value) ) = 0;
-          ut_assert_processor.reset_nls_params();
-        else
-          l_result := equal_with_nulls( null, a_actual);
-        end if;
-      end;
-    elsif self.expected is of (ut_data_value_timestamp) and a_actual is of (ut_data_value_timestamp) then
-      declare
-        l_expected ut_data_value_timestamp := treat(self.expected as ut_data_value_timestamp);
-        l_actual   ut_data_value_timestamp := treat(a_actual as ut_data_value_timestamp);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_timestamp_ltz) and a_actual is of (ut_data_value_timestamp_ltz) then
-      declare
-        l_expected ut_data_value_timestamp_ltz := treat(self.expected as ut_data_value_timestamp_ltz);
-        l_actual   ut_data_value_timestamp_ltz := treat(a_actual as ut_data_value_timestamp_ltz);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_timestamp_tz) and a_actual is of (ut_data_value_timestamp_tz) then
-      declare
-        l_expected ut_data_value_timestamp_tz := treat(self.expected as ut_data_value_timestamp_tz);
-        l_actual   ut_data_value_timestamp_tz := treat(a_actual as ut_data_value_timestamp_tz);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_varchar2) and a_actual is of (ut_data_value_varchar2) then
-      declare
-        l_expected ut_data_value_varchar2 := treat(self.expected as ut_data_value_varchar2);
-        l_actual   ut_data_value_varchar2 := treat(a_actual as ut_data_value_varchar2);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_yminterval) and a_actual is of (ut_data_value_yminterval) then
-      declare
-        l_expected ut_data_value_yminterval := treat(self.expected as ut_data_value_yminterval);
-        l_actual   ut_data_value_yminterval := treat(a_actual as ut_data_value_yminterval);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
-    elsif self.expected is of (ut_data_value_dsinterval) and a_actual is of (ut_data_value_dsinterval) then
-      declare
-        l_expected ut_data_value_dsinterval := treat(self.expected as ut_data_value_dsinterval);
-        l_actual   ut_data_value_dsinterval := treat(a_actual as ut_data_value_dsinterval);
-      begin
-        l_result := equal_with_nulls((l_expected.data_value = l_actual.data_value), a_actual);
-      end;
+    if self.expected.data_type = a_actual.data_type then
+      if self.expected is of (ut_data_value_anydata) then
+        l_result := 0 = treat(self.expected as ut_data_value_anydata).compare_implementation( a_actual, options );
+      elsif self.expected is of (ut_data_value_refcursor) then
+        l_result := 0 = treat(self.expected as ut_data_value_refcursor).compare_implementation( a_actual, options );
+      else
+        l_result := equal_with_nulls((self.expected = a_actual), a_actual);
+      end if;
+      l_result := equal_with_nulls( l_result, a_actual );
     else
       l_result := (self as ut_matcher).run_matcher(a_actual);
     end if;
     return l_result;
+  end;
+
+  overriding member function failure_message(a_actual ut_data_value) return varchar2 is
+    l_result varchar2(32767);
+  begin
+    if self.expected.data_type = a_actual.data_type and self.expected.is_diffable then
+        l_result :=
+          'Actual: '||a_actual.get_object_info()||self.description()||': '||self.expected.get_object_info()
+          ||case
+              when  self.expected is of (ut_data_value_refcursor) then
+                treat(expected as ut_data_value_refcursor).diff( a_actual, options )
+              when self.expected is of (ut_data_value_json) then
+                treat(expected as ut_data_value_json).diff( a_actual, options )
+            else
+                expected.diff( a_actual, options )
+            end;
+    else
+      l_result := (self as ut_matcher).failure_message(a_actual) || ': '|| self.expected.to_string_report();
+    end if;
+    return l_result;
+  end;
+
+  overriding member function failure_message_when_negated(a_actual ut_data_value) return varchar2 is
+    l_result varchar2(32767);
+  begin
+    return (self as ut_matcher).failure_message_when_negated(a_actual) || ': '|| expected.to_string_report();
   end;
 
 end;

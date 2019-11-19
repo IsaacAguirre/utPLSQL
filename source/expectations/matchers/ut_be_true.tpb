@@ -1,7 +1,7 @@
 create or replace type body ut_be_true as
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ create or replace type body ut_be_true as
 
   constructor function ut_be_true(self in out nocopy ut_be_true) return self as result is
   begin
-    self.name := 'be true';
+    self.self_type := $$plsql_unit;
     return;
   end;
 

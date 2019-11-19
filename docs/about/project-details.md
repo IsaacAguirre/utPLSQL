@@ -1,3 +1,5 @@
+![version](https://img.shields.io/badge/version-v3.1.10.3274--develop-blue.svg)
+
 # utPLSQL Project Details
 
 [![chat](http://img.shields.io/badge/GitHub_Project-Active-blue.svg)](https://github.com/utPLSQL/utPLSQL)
@@ -6,10 +8,11 @@
 [![twitter](https://img.shields.io/twitter/follow/utPLSQL.svg?style=social&label=Follow)](https://twitter.com/utPLSQL)
 
 
-utPLSQL is hosted on [hosted on GitHub](https://github.com/utPLSQL/utPLSQL) and open source project.
+utPLSQL is open source project [hosted on GitHub](https://github.com/utPLSQL/utPLSQL).
 
-Community help on this project is always appreciated, if your interested in helping please read our [guide to contributing](https://github.com/utPLSQL/utPLSQL/blob/master/CONTRIBUTING.md)
+Contributions, help and constructive feedback is always appreciated.
+
+If you are interested in helping please read our [contributing guide](https://github.com/utPLSQL/utPLSQL/blob/develop/CONTRIBUTING.md)
 
 
 
- 

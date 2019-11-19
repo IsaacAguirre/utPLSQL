@@ -1,7 +1,7 @@
 create or replace type body ut_data_value_yminterval as
   /*
-  utPLSQL - Version X.X.X.X
-  Copyright 2016 - 2017 utPLSQL Project
+  utPLSQL - Version 3
+  Copyright 2016 - 2019 utPLSQL Project
 
   Licensed under the Apache License, Version 2.0 (the "License"):
   you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ create or replace type body ut_data_value_yminterval as
   constructor function ut_data_value_yminterval(self in out nocopy ut_data_value_yminterval, a_value yminterval_unconstrained) return self as result is
   begin
     self.data_value := a_value;
-    self.data_type := 'year to month interval';
+    self.self_type  := $$plsql_unit;
+    self.data_type := 'interval year to month';
     return;
   end;
 
@@ -33,5 +34,21 @@ create or replace type body ut_data_value_yminterval as
     return ut_utils.to_string(self.data_value);
   end;
 
+  overriding member function compare_implementation(a_other ut_data_value) return integer is
+    l_result integer;
+    l_other  ut_data_value_yminterval;
+  begin
+    if a_other is of (ut_data_value_yminterval) then
+      l_other := treat(a_other as ut_data_value_yminterval);
+      if self.data_value = l_other.data_value then
+        l_result := 0;
+      elsif self.data_value > l_other.data_value then
+        l_result := 1;
+      elsif self.data_value < l_other.data_value then
+        l_result := -1;
+      end if;
+    end if;
+    return l_result;
+  end;
 end;
 /
